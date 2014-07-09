@@ -26,4 +26,6 @@ fn main() {
     };
 
     println!("the square root of {} is {}", z, z_sqrt);
+
+    println!("the square root of DIE is {}", bson::five());
 }
