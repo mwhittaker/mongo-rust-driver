@@ -1,0 +1,3 @@
+[submodule "vagrant/puppet/modules/vcsrepo"]
+	path = vagrant/puppet/modules/vcsrepo
+	url = git@github.com:puppetlabs/puppetlabs-vcsrepo.git
