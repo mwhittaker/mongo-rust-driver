@@ -1,6 +1,6 @@
 extern crate libc;
 
-mod encode;
+mod decode;
 
 pub enum bson_t {}
 pub enum bson_error_t {}
@@ -71,6 +71,6 @@ fn main() {
         let b = bson_new_from_json(f.as_ptr() as *const u8,
                                    f.len() as u64,
                                    0 as *mut bson_error_t);
-        encode::decode(b as *const bson_t);
+        decode::decode(b as *const bson_t);
     }
 }
