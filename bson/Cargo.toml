@@ -1,0 +1,7 @@
+[package]
+name = "bson.rs"
+version = "0.1.0"
+authors = [ "michael.whittaker@mongodb.com", "xander.masotto@mongodb.com" ]
+
+[[bin]]
+name = "bson"
