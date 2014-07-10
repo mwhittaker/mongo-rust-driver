@@ -20,11 +20,11 @@ pub fn decode(bson: *const super::bson_t) {
 }
 
 fn parse_document(reader: &BufReader) -> Document {
-    let n = reader.read_le_i32().unwrap();
-    let elements = parse_elist(reader);
+    reader.read_le_i32().unwrap();
+    parse_elist(reader)
 }
 
-fn parse_elist(reader: &BufReader) -> Vec<Element> {
+fn parse_elist(reader: &BufReader) -> Document {
     match parse_element(reader) {
         Some(x) => parse_elist(reader).unshift(x),
         None => Vec<Element>::new()
@@ -32,11 +32,18 @@ fn parse_elist(reader: &BufReader) -> Vec<Element> {
 }
 
 fn parse_element(reader: &BufReader) -> Option<Element> {
-    match reader.read_byte() {
-        Ok(0x00) => None,
-        Ok(0x01) => 1,
-        Ok(0x02) => 2,
-        Ok(0x03) => 3,
-        _ => fail!("Corrupted doc!"),
+    let t = reader.read_byte().unwrap();
+    if t == 0 {
+        None
+    } else {
+        let name = reader.read_to_string().unwrap();
+        let value = match t {
+            0x01 => V_Double(reader.read_le_f64().unwrap()),
+            0x02 => V_String(reader.read_to_string().unwrap()),
+            0x03 => V_Document(parse_document(reader)),
+            0x04 => V_Array(parse_document(reader)),
+            _ => fail!("Corrupted doc!")
+        }
+        Element(name, value)
     }
 }
