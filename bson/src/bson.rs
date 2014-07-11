@@ -1,11 +1,59 @@
+//! Crate bson provides functions to encode, decode, and generally interact
+//! with bson.
+
 extern crate libc;
 
-mod decode;
+//mod decode;
+mod encode;
 
+/// bson_t is a rust wrapper to the C driver's bson_t. You cannot directly
+/// construct a bson_t from within rust. Instead, you must receive a pointer to
+/// bson_t from a foreign function call.
 pub enum bson_t {}
 pub enum bson_error_t {}
 pub enum bson_realloc_func {}
 pub enum bson_validate_flags_t {}
+
+/// A bson document.
+#[deriving(Show)]
+pub struct Document(Vec<Element>);
+
+/// A bson element.
+#[deriving(Show)]
+pub struct Element(String, Value);
+
+/// A bson value.
+#[deriving(Show)]
+pub enum Value {
+    V_Double(f64),
+    V_String(String),
+    V_Document(Document),
+    V_Array(Document),
+    V_Binary(i32, Subtype, Vec<u8>),
+    V_ObjectId(Vec<u8>),
+    V_False,
+    V_True,
+    V_Datetime(i64),
+    V_Null,
+    V_Regex(String, String),
+    V_Javascript(String),
+    V_Int(i32),
+    V_Timestamp(i64),
+    V_MinKey,
+    V_ManKey
+}
+
+#[deriving(Show)]
+pub enum Subtype {
+    Generic,
+    Function,
+    Binary,
+    UUID,
+    MD5,
+    UserDefined
+}
+
+
 
 #[link(name = "bson-1.0")]
 extern {
@@ -66,12 +114,12 @@ extern {
 }
 
 fn main() {
-    unsafe {
-        let f = "{\"abc\": {\"a\": 2}}".to_c_str();
-        let b = bson_new_from_json(f.as_ptr() as *const u8,
-                                   f.len() as u64,
-                                   0 as *mut bson_error_t);
-        let doc = decode::decode(b as *const bson_t);
-        println!("my doc {}", doc);
-    }
+//    unsafe {
+//        let f = "{\"abc\": {\"a\": 2}}".to_c_str();
+//        let b = bson_new_from_json(f.as_ptr() as *const u8,
+//                                   f.len() as u64,
+//                                   0 as *mut bson_error_t);
+//        let doc = decode::decode(b as *const bson_t);
+//        println!("my doc {}", doc);
+//    }
 }

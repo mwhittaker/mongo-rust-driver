@@ -7,43 +7,6 @@ use std::raw::Slice;
 
 use super::bson_t;
 use super::bson_get_data;
-
-#[deriving(Show)]
-pub struct Document(Vec<Element>);
-
-#[deriving(Show)]
-pub struct Element(String, Value);
-
-#[deriving(Show)]
-pub enum Value {
-    V_Double(f64),
-    V_String(String),
-    V_Document(Document),
-    V_Array(Document),
-    V_Binary(i32, Subtype, Vec<u8>),
-//    V_ObjectId([u8, ..12]),
-    V_False,
-    V_True,
-    V_Datetime(i64),
-    V_Null,
-    V_Regex(String, String),
-    V_Javascript(String),
-    V_Int(i32),
-    V_Timestamp(i64),
-    V_MinKey,
-    V_ManKey
-}
-
-#[deriving(Show)]
-pub enum Subtype {
-    Generic,
-    Function,
-    Binary,
-    UUID,
-    MD5,
-    UserDefined
-}
-
 pub fn decode(bson: *const super::bson_t) -> Document {
     unsafe {
         let ptr: *const u8 = super::bson_get_data(bson);
