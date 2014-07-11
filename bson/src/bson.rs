@@ -16,7 +16,7 @@ pub enum bson_validate_flags_t {}
 
 /// A bson document.
 #[deriving(Show)]
-pub struct Document(Vec<Element>);
+pub struct Document(i32, Vec<Element>);
 
 /// A bson element.
 #[deriving(Show)]
@@ -114,6 +114,7 @@ extern {
 }
 
 fn main() {
+    println!("{}", encode::encode(Document(32, vec!(Element("".to_string(),V_False)))));
 //    unsafe {
 //        let f = "{\"abc\": {\"a\": 2}}".to_c_str();
 //        let b = bson_new_from_json(f.as_ptr() as *const u8,
