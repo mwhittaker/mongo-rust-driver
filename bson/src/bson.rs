@@ -25,25 +25,26 @@ pub struct Element(String, Value);
 /// A bson value.
 #[deriving(Show)]
 pub enum Value {
-    V_Double(f64),
-    V_String(String),
-    V_Document(Document),
-    V_Array(Document),
-    V_Binary(i32, Subtype, Vec<u8>),
-    V_ObjectId(Vec<u8>),
-    V_False,
-    V_True,
-    V_Datetime(i64),
-    V_Null,
-    V_Regex(String, String),
-    V_Javascript(String),
-    V_Int(i32),
-    V_Timestamp(i64),
-    V_MinKey,
-    V_ManKey
+    VDouble(f64),
+    VString(String),
+    VDocument(Document),
+    VArray(Document),
+    VBinary(i32, Subtype, Vec<u8>),
+    VObjectId(Vec<u8>),
+    VFalse,
+    VTrue,
+    VDatetime(i64),
+    VNull,
+    VRegex(String, String),
+    VJavascript(String),
+    VInt(i32),
+    VTimestamp(i64),
+    VMinKey,
+    VManKey
 }
 
 #[deriving(Show)]
+#[deriving(Clone)]
 pub enum Subtype {
     Generic,
     Function,
@@ -52,8 +53,6 @@ pub enum Subtype {
     MD5,
     UserDefined
 }
-
-
 
 #[link(name = "bson-1.0")]
 extern {
@@ -114,7 +113,13 @@ extern {
 }
 
 fn main() {
-    println!("{}", encode::encode(Document(32, vec!(Element("".to_string(),V_False)))));
+    let d = Document(32, 
+        vec!(
+            Element("a".to_string(),VFalse),
+            Element("b".to_string(), VDouble(1.0))
+        )
+    );
+    println!("{}", encode::encode(&d));
 //    unsafe {
 //        let f = "{\"abc\": {\"a\": 2}}".to_c_str();
 //        let b = bson_new_from_json(f.as_ptr() as *const u8,
