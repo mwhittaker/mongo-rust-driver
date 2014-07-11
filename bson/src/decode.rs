@@ -2,39 +2,18 @@ use std::vec::Vec;
 use std::io::BufReader;
 use super::Document;
 
-#[deriving(Show)]
-pub struct Element(String, Value);
-
-#[deriving(Show)]
-pub enum Value {
-    V_Double(f64),
-    V_String(String),
-    V_Document(Document),
-    V_Array(Document),
-    V_Binary(i32, Subtype, Vec<u8>),
-//    V_ObjectId([u8, ..12]),
-    V_False,
-    V_True,
-    V_Datetime(i64),
-    V_Null,
-    V_Regex(String, String),
-    V_Javascript(String),
-    V_Int(i32),
-    V_Timestamp(i64),
-    V_MinKey,
-    V_ManKey
+use super::bson_t;
+use super::bson_get_data;
+pub fn decode(bson: *const super::bson_t) -> Document {
+    unsafe {
+        let ptr: *const u8 = super::bson_get_data(bson);
+        let n = Int::from_le(ptr::read(ptr as *const i32)) as uint;
+        let buf: &[u8] =
+            mem::transmute(Slice { data: ptr, len: n });
+        let mut reader = BufReader::new(buf);
+        parse_document(&mut reader)
+    }
 }
-
-#[deriving(Show)]
-pub enum Subtype {
-    Generic,
-    Function,
-    Binary,
-    UUID,
-    MD5,
-    UserDefined
-}
-
 
 fn parse_document(reader: &mut BufReader) -> Document {
     let n = reader.read_le_i32().unwrap();

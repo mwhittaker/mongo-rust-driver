@@ -1,3 +1,6 @@
+//! Crate bson provides functions to encode, decode, and generally interact
+//! with bson.
+
 extern crate libc;
 extern crate serialize;
 
@@ -8,15 +11,56 @@ use std::ptr;
 use std::raw::Slice;
 use std::vec::Vec;
 
-mod decode;
+//mod decode;
+mod encode;
 
+/// bson_t is a rust wrapper to the C driver's bson_t. You cannot directly
+/// construct a bson_t from within rust. Instead, you must receive a pointer to
+/// bson_t from a foreign function call.
 pub enum bson_t {}
 pub enum bson_error_t {}
 pub enum bson_realloc_func {}
 pub enum bson_validate_flags_t {}
 
+/// A bson document.
 #[deriving(Show)]
-pub struct Document(Vec<decode::Element>);
+pub struct Document(i32, Vec<Element>);
+
+/// A bson element.
+#[deriving(Show)]
+pub struct Element(String, Value);
+
+/// A bson value.
+#[deriving(Show)]
+pub enum Value {
+    VDouble(f64),
+    VString(String),
+    VDocument(Document),
+    VArray(Document),
+    VBinary(i32, Subtype, Vec<u8>),
+    VObjectId(Vec<u8>),
+    VFalse,
+    VTrue,
+    VDatetime(i64),
+    VNull,
+    VRegex(String, String),
+    VJavascript(String),
+    VInt(i32),
+    VTimestamp(i64),
+    VMinKey,
+    VManKey
+}
+
+#[deriving(Show)]
+#[deriving(Clone)]
+pub enum Subtype {
+    Generic,
+    Function,
+    Binary,
+    UUID,
+    MD5,
+    UserDefined
+}
 
 #[link(name = "bson-1.0")]
 extern {
@@ -107,15 +151,18 @@ impl Document {
 
 
 fn main() {
-    unsafe {
-        let object = json::decode("{\"abc\": {\"a\": 2}}");
-        let doc = Document::from_json(object);
-        println!("my doc {}", doc);
-/*
-
-        let b = bson_new_from_json(f.as_ptr() as *const u8,
-                                   f.len() as u64,
-                                   0 as *mut bson_error_t);
+    let d = Document(32,
+        vec!(
+            Element("a".to_string(),VFalse),
+            Element("b".to_string(), VDouble(1.0))
+        )
+    );
+    println!("{}", encode::encode(&d));
+//    unsafe {
+//        let f = "{\"abc\": {\"a\": 2}}".to_c_str();
+//        let b = bson_new_from_json(f.as_ptr() as *const u8,
+//                                   f.len() as u64,
+//                                   0 as *mut bson_error_t);
 //        let doc = decode::decode(b as *const bson_t);
         Document::from_bytes(b as *const bson_t);
         println!("my doc {}", doc);*/
