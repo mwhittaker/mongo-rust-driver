@@ -15,3 +15,5 @@ include git
 include rust
 include tmux
 include cdriver
+include valgrind
+include gpp
