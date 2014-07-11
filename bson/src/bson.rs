@@ -71,6 +71,7 @@ fn main() {
         let b = bson_new_from_json(f.as_ptr() as *const u8,
                                    f.len() as u64,
                                    0 as *mut bson_error_t);
-        decode::decode(b as *const bson_t);
+        let doc = decode::decode(b as *const bson_t);
+        println!("my doc {}", doc);
     }
 }
