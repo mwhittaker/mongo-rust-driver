@@ -52,7 +52,7 @@ fn parse_elist(reader: &mut BufReader) -> Vec<Element> {
 fn read_cstring(reader: &mut BufReader) -> String {
     let mut bytes = reader.read_until(0).unwrap();
     bytes.pop();
-    String::from_utf8(bytes).unwrap();
+    String::from_utf8(bytes).unwrap()
 }
 
 fn parse_element(reader: &mut BufReader) -> Option<Element> {
@@ -67,7 +67,7 @@ fn parse_element(reader: &mut BufReader) -> Option<Element> {
             0x03 => VDocument(parse_document(reader)),
             0x04 => VArray(parse_document(reader)),
             0x10 => VInt(reader.read_le_i32().unwrap()),
-            _ => fail!("Corrupted doc!")
+            _ => fail!("Corrupted doc! t={}, name={}", t, name)
         };
         Some(Element(name, value))
     }

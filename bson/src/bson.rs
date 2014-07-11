@@ -140,8 +140,12 @@ impl Document {
         }
     }
 
+    fn from_vec(buf: Vec<u8>) -> Document {
+        Document::from_bytes(buf.as_slice())
+    }
+
     fn from_bytes(buf: &[u8]) -> Document {
-        Document::from_reader(&BufReader::new(buf))
+        Document::from_reader(&mut BufReader::new(buf))
     }
 
     fn from_reader(reader: &mut BufReader) -> Document {
@@ -157,7 +161,13 @@ fn main() {
             Element("b".to_string(), VDouble(1.0))
         )
     );
-    println!("{}", encode::encode(&d));
+    let encoded = encode::encode(&d);
+    println!("{}", encoded);
+
+    let d2 = Document::from_vec(encoded);
+    println!("{}", d2);
+
+
 //    unsafe {
 //        let f = "{\"abc\": {\"a\": 2}}".to_c_str();
 //        let b = bson_new_from_json(f.as_ptr() as *const u8,
