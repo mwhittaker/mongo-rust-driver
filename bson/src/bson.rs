@@ -1,4 +1,12 @@
 extern crate libc;
+extern crate serialize;
+
+use serialize::json;
+use std::io::BufReader;
+use std::mem;
+use std::ptr;
+use std::raw::Slice;
+use std::vec::Vec;
 
 mod decode;
 
@@ -7,31 +15,33 @@ pub enum bson_error_t {}
 pub enum bson_realloc_func {}
 pub enum bson_validate_flags_t {}
 
+#[deriving(Show)]
+pub struct Document(Vec<decode::Element>);
+
 #[link(name = "bson-1.0")]
 extern {
-    fn bson_new() -> *mut bson_t;
-    fn bson_new_from_json(data: *const libc::uint8_t, len: libc::size_t, error: *mut bson_error_t) -> *mut bson_t;
-    fn bson_init_from_json(bson: *mut bson_t, data: *const libc::c_char, len: libc::size_t, error: *mut bson_error_t) -> bool;
-    fn bson_init_static(b: *mut bson_t, data: *const libc::uint8_t, length: libc::size_t) -> bool;
-    fn bson_init(b: *mut bson_t) -> libc::c_void;
-    fn bson_reinit(b: *mut bson_t) -> libc::c_void;
     fn bson_new_from_data(data: *const libc::uint8_t, length: libc::size_t) -> bson_t;
+    fn bson_as_json(bson: *const bson_t, length: *mut libc::size_t)  -> *mut libc::c_char;
+    fn bson_new_from_json(data: *const libc::uint8_t, len: libc::size_t, error: *mut bson_error_t) -> *mut bson_t;
+    fn bson_get_data(bson: *const bson_t) -> *const libc::uint8_t;
+    fn bson_destroy(bson: *mut bson_t) -> libc::c_void;
+
+    /*
+    fn bson_init(b: *mut bson_t) -> libc::c_void;
+    fn bson_new() -> *mut bson_t;
+    fn bson_init_from_json(bson: *mut bson_t, data: *const libc::c_char, len: libc::size_t, error: *mut bson_error_t) -> bool;
+    fn bson_reinit(b: *mut bson_t) -> libc::c_void;
     fn bson_new_from_buffer(buf: *mut *mut libc::uint8_t, buf_len: *mut libc::size_t, realloc_func: bson_realloc_func, realloc_func_ctx: *mut libc::c_void) -> bson_t;
     fn bson_sized_new(size: libc::size_t) -> bson_t;
     fn bson_copy(bson: *const bson_t) -> bson_t;
     fn bson_copy_to(src: *const bson_t, std: *mut bson_t) -> libc::c_void;
-    fn bson_destroy(bson: *mut bson_t) -> libc::c_void;
     fn bson_destroy_with_steal(bson: *mut bson_t, steal: bool, length: *mut libc::uint32_t) -> libc::uint8_t;
-    fn bson_get_data(bson: *const bson_t) -> *const libc::uint8_t;
     fn bson_count_keys(bson: *const bson_t) -> libc::uint32_t;
     fn bson_has_field(bson: *const bson_t, key: *const libc::c_char) -> bool;
     fn bson_compare(bson: *const bson_t, other: *const bson_t) -> int;
     fn bson_equal(bson: *const bson_t, other: *const bson_t) -> bool;
     fn bson_validate(bson: *const bson_t,flags: bson_validate_flags_t, offset: *mut libc::size_t) -> bool;
-    fn bson_as_json(bson: *const bson_t, length: *mut libc::size_t)  -> *mut libc::c_char;
     fn bson_array_as_json(bson: *const bson_t, lenght: *mut libc::size_t) -> *mut libc::c_char;
-
-    /*
     fn bson_append_value(bson: *mut bson_t, key: *const char, key_length: int, value: *const bson_value_t) -> bool;
     fn bson_append_array(bson: *mut bson_t, key: *const char, key_length: int, array: *const bson_t)  -> bool;
     fn bson_append_binary(bson: *mut bson_t, key: *const char, key_length: int, bson_subtype_t subtype, const uint8_t *binary, uint32_t length) -> bool;
@@ -65,13 +75,49 @@ extern {
     */
 }
 
+impl Document {
+    fn from_json(object: &mut json::Json) -> Document {
+        unsafe {
+            // convert json to bson
+            let json_str = json::encode(object).as_slice().to_c_str();
+            let b = bson_new_from_json(
+                json_str.as_ptr() as *const u8,
+                json_str.len() as u64,
+                0 as *mut bson_error_t);
+
+            // convert bson to rust data types
+            let ptr: *const u8 = bson_get_data(b as *const bson_t);
+            let n = Int::from_le(ptr::read(ptr as *const i32)) as uint;
+            let buf: &[u8] =
+                mem::transmute(Slice { data: ptr, len: n });
+            let doc = Document::from_bytes(buf);
+            bson_destroy(b);
+            return doc;
+        }
+    }
+
+    fn from_bytes(buf: &[u8]) -> Document {
+        Document::from_reader(&BufReader::new(buf))
+    }
+
+    fn from_reader(reader: &mut BufReader) -> Document {
+        decode::parse_document(reader)
+    }
+}
+
+
 fn main() {
     unsafe {
-        let f = "{\"abc\": {\"a\": 2}}".to_c_str();
+        let object = json::decode("{\"abc\": {\"a\": 2}}");
+        let doc = Document::from_json(object);
+        println!("my doc {}", doc);
+/*
+
         let b = bson_new_from_json(f.as_ptr() as *const u8,
                                    f.len() as u64,
                                    0 as *mut bson_error_t);
-        let doc = decode::decode(b as *const bson_t);
-        println!("my doc {}", doc);
+//        let doc = decode::decode(b as *const bson_t);
+        Document::from_bytes(b as *const bson_t);
+        println!("my doc {}", doc);*/
     }
 }
