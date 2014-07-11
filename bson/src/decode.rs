@@ -1,23 +1,41 @@
 use std::vec::Vec;
 use std::io::BufReader;
-use super::Document;
+use std::ptr;
+use std::raw;
+use std::mem;
 
 use super::bson_t;
 use super::bson_get_data;
-pub fn decode(bson: *const super::bson_t) -> Document {
-    unsafe {
-        let ptr: *const u8 = super::bson_get_data(bson);
-        let n = Int::from_le(ptr::read(ptr as *const i32)) as uint;
-        let buf: &[u8] =
-            mem::transmute(Slice { data: ptr, len: n });
-        let mut reader = BufReader::new(buf);
-        parse_document(&mut reader)
-    }
-}
+use super::Document;
+use super::Element;
+use super::Value;
+    use super::VDouble;
+    use super::VString;
+    use super::VDocument;
+    use super::VArray;
+    use super::VBinary;
+    use super::VObjectId;
+    use super::VFalse;
+    use super::VTrue;
+    use super::VDatetime;
+    use super::VNull;
+    use super::VRegex;
+    use super::VJavascript;
+    use super::VInt;
+    use super::VTimestamp;
+    use super::VMinKey;
+    use super::VManKey;
+use super::Generic;
+use super::Function;
+use super::Binary;
+use super::UUID;
+use super::MD5;
+use super::UserDefined;
+use super::Subtype;
 
-fn parse_document(reader: &mut BufReader) -> Document {
+pub fn parse_document(reader: &mut BufReader) -> Document {
     let n = reader.read_le_i32().unwrap();
-    Document(parse_elist(reader))
+    Document(n, parse_elist(reader))
 }
 
 fn parse_elist(reader: &mut BufReader) -> Vec<Element> {
@@ -31,20 +49,24 @@ fn parse_elist(reader: &mut BufReader) -> Vec<Element> {
     }
 }
 
+fn read_cstring(reader: &mut BufReader) -> String {
+    let mut bytes = reader.read_until(0).unwrap();
+    bytes.pop();
+    String::from_utf8(bytes).unwrap();
+}
+
 fn parse_element(reader: &mut BufReader) -> Option<Element> {
     let t = reader.read_byte().unwrap();
     if t == 0 {
         None
     } else {
-        let mut name_bytes = reader.read_until(0).unwrap();
-        name_bytes.pop();
-        let name = String::from_utf8(name_bytes).unwrap();
+        let name = read_cstring(reader);
         let value = match t {
-            0x01 => V_Double(reader.read_le_f64().unwrap()),
-            0x02 => V_String(reader.read_to_string().unwrap()),
-            0x03 => V_Document(parse_document(reader)),
-            0x04 => V_Array(parse_document(reader)),
-            0x10 => V_Int(reader.read_le_i32().unwrap()),
+            0x01 => VDouble(reader.read_le_f64().unwrap()),
+            0x02 => VString(read_cstring(reader)),
+            0x03 => VDocument(parse_document(reader)),
+            0x04 => VArray(parse_document(reader)),
+            0x10 => VInt(reader.read_le_i32().unwrap()),
             _ => fail!("Corrupted doc!")
         };
         Some(Element(name, value))

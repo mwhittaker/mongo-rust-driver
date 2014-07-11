@@ -11,7 +11,7 @@ use std::ptr;
 use std::raw::Slice;
 use std::vec::Vec;
 
-//mod decode;
+mod decode;
 mod encode;
 
 /// bson_t is a rust wrapper to the C driver's bson_t. You cannot directly
@@ -164,7 +164,7 @@ fn main() {
 //                                   f.len() as u64,
 //                                   0 as *mut bson_error_t);
 //        let doc = decode::decode(b as *const bson_t);
-        Document::from_bytes(b as *const bson_t);
-        println!("my doc {}", doc);*/
-    }
+    //    Document::from_bytes(b as *const bson_t);
+       // println!("my doc {}", doc);*/
+    //}
 }
